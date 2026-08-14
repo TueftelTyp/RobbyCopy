@@ -11,6 +11,7 @@
     <RootNamespace>RobbyCopy</RootNamespace>
     <LangVersion>latest</LangVersion>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationIcon>robben.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
