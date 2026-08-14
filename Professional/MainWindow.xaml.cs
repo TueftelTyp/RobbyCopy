@@ -99,6 +99,7 @@ namespace RobbyCopy
                     ["OnlyNewer"] = "Copy only newer files",
                     ["CopyPermissions"] = "Copy permissions (admin recommended)",
                     ["UseSourceSubfolder"] = "Create subfolder per source in target",
+                    ["FolderStructureOnly"] = "Copy folder structure only (no files)",
                     ["TestRun"] = "Test run (no changes)",
                     ["Retries"] = "Retries",
                     ["WaitSeconds"] = "Wait (sec.)",
@@ -220,6 +221,7 @@ namespace RobbyCopy
                     ["OnlyNewer"] = "Nur neuere Dateien kopieren",
                     ["CopyPermissions"] = "Berechtigungen kopieren (Admin empfohlen)",
                     ["UseSourceSubfolder"] = "Für jede Quelle einen Unterordner im Ziel anlegen",
+                    ["FolderStructureOnly"] = "Nur Ordnerstruktur kopieren (keine Dateien)",
                     ["TestRun"] = "Testlauf (keine Änderungen)",
                     ["Retries"] = "Wiederholungen",
                     ["WaitSeconds"] = "Wartezeit (Sek.)",
@@ -349,6 +351,7 @@ namespace RobbyCopy
         public bool OnlyNewer { get; set; }
         public bool CopyPermissions { get; set; }
         public bool UseSourceSubfolder { get; set; } = true;
+        public bool FolderStructureOnly { get; set; }
         public bool TestRun { get; set; }
 
         public int Retries { get; set; } = 1;
@@ -900,6 +903,7 @@ namespace RobbyCopy
             chkOnlyNewer.IsChecked = profile.OnlyNewer;
             chkPermissions.IsChecked = profile.CopyPermissions;
             chkUseSourceSubfolder.IsChecked = profile.UseSourceSubfolder;
+            chkFolderStructureOnly.IsChecked = profile.FolderStructureOnly;
             chkTestRun.IsChecked = profile.TestRun;
 
             txtRetries.Text = profile.Retries.ToString(CultureInfo.InvariantCulture);
@@ -977,6 +981,7 @@ namespace RobbyCopy
                     chkOnlyNewer.IsChecked = false;
                     chkPermissions.IsChecked = false;
                     chkUseSourceSubfolder.IsChecked = true;
+                    chkFolderStructureOnly.IsChecked = false;
                     chkTestRun.IsChecked = false;
                     break;
 
@@ -988,6 +993,7 @@ namespace RobbyCopy
                     chkOnlyNewer.IsChecked = true;
                     chkPermissions.IsChecked = false;
                     chkUseSourceSubfolder.IsChecked = true;
+                    chkFolderStructureOnly.IsChecked = false;
                     chkTestRun.IsChecked = false;
                     break;
 
@@ -999,6 +1005,7 @@ namespace RobbyCopy
                     chkOnlyNewer.IsChecked = true;
                     chkPermissions.IsChecked = false;
                     chkUseSourceSubfolder.IsChecked = true;
+                    chkFolderStructureOnly.IsChecked = false;
                     chkTestRun.IsChecked = false;
                     break;
 
@@ -1010,6 +1017,7 @@ namespace RobbyCopy
                     chkOnlyNewer.IsChecked = false;
                     chkPermissions.IsChecked = false;
                     chkUseSourceSubfolder.IsChecked = true;
+                    chkFolderStructureOnly.IsChecked = false;
                     chkTestRun.IsChecked = false;
                     break;
             }
@@ -1085,6 +1093,25 @@ namespace RobbyCopy
             UpdateCommandPreview();
         }
 
+        private void FolderStructureOnly_Changed(object sender, RoutedEventArgs e)
+        {
+            if (!_uiReady || _initializing || _loadingProfile)
+            {
+                return;
+            }
+
+            if (chkFolderStructureOnly.IsChecked == true)
+            {
+                chkMirror.IsChecked = false;
+                chkNoOverwrite.IsChecked = false;
+                chkOnlyNewer.IsChecked = false;
+                chkPermissions.IsChecked = false;
+            }
+
+            UpdateOptionAvailability();
+            UpdateCommandPreview();
+        }
+
         private void Options_Changed(object sender, RoutedEventArgs e)
         {
             if (!_uiReady || _initializing || _loadingProfile)
@@ -1126,17 +1153,22 @@ namespace RobbyCopy
                 chkEmptyDirs == null ||
                 chkMirror == null ||
                 chkNoOverwrite == null ||
-                chkOnlyNewer == null)
+                chkOnlyNewer == null ||
+                chkPermissions == null ||
+                chkFolderStructureOnly == null)
             {
                 return;
             }
 
             bool mirror = chkMirror.IsChecked == true;
+            bool folderOnly = chkFolderStructureOnly.IsChecked == true;
 
-            chkSubdirs.IsEnabled = !mirror;
-            chkEmptyDirs.IsEnabled = !mirror && chkSubdirs.IsChecked == true;
-            chkNoOverwrite.IsEnabled = !mirror;
-            chkOnlyNewer.IsEnabled = !mirror;
+            chkSubdirs.IsEnabled = !mirror && !folderOnly;
+            chkEmptyDirs.IsEnabled = !mirror && !folderOnly && chkSubdirs.IsChecked == true;
+            chkMirror.IsEnabled = !folderOnly;
+            chkNoOverwrite.IsEnabled = !mirror && !folderOnly;
+            chkOnlyNewer.IsEnabled = !mirror && !folderOnly;
+            chkPermissions.IsEnabled = !folderOnly;
         }
 
         private void UpdateCommandPreview()
@@ -1158,7 +1190,8 @@ namespace RobbyCopy
                 chkPermissions == null ||
                 chkTestRun == null ||
                 txtRetries == null ||
-                txtWait == null)
+                txtWait == null ||
+                chkFolderStructureOnly == null)
             {
                 return;
             }
@@ -2016,34 +2049,42 @@ namespace RobbyCopy
             sb.Append(' ');
             sb.Append(Quote(target));
 
-            if (chkMirror.IsChecked == true)
+            if (chkFolderStructureOnly.IsChecked == true)
             {
-                sb.Append(" /MIR");
-            }
-            else if (chkSubdirs.IsChecked == true)
-            {
-                sb.Append(chkEmptyDirs.IsChecked == true ? " /E" : " /S");
-            }
-
-            if (chkMirror.IsChecked != true)
-            {
-                if (chkNoOverwrite.IsChecked == true)
-                {
-                    sb.Append(" /XC /XN /XO");
-                }
-                else if (chkOnlyNewer.IsChecked == true)
-                {
-                    sb.Append(" /XO");
-                }
-            }
-
-            if (chkPermissions.IsChecked == true)
-            {
-                sb.Append(" /COPYALL");
+                // Nur Ordnerstruktur: /E für alle Unterordner, /XF *.* um alle Dateien auszuschließen
+                sb.Append(" /E /XF *.*");
             }
             else
             {
-                sb.Append(" /COPY:DAT");
+                if (chkMirror.IsChecked == true)
+                {
+                    sb.Append(" /MIR");
+                }
+                else if (chkSubdirs.IsChecked == true)
+                {
+                    sb.Append(chkEmptyDirs.IsChecked == true ? " /E" : " /S");
+                }
+
+                if (chkMirror.IsChecked != true)
+                {
+                    if (chkNoOverwrite.IsChecked == true)
+                    {
+                        sb.Append(" /XC /XN /XO");
+                    }
+                    else if (chkOnlyNewer.IsChecked == true)
+                    {
+                        sb.Append(" /XO");
+                    }
+                }
+
+                if (chkPermissions.IsChecked == true)
+                {
+                    sb.Append(" /COPYALL");
+                }
+                else
+                {
+                    sb.Append(" /COPY:DAT");
+                }
             }
 
             int retries = ParseInt(txtRetries.Text, 1);
@@ -2269,6 +2310,7 @@ namespace RobbyCopy
                 OnlyNewer = chkOnlyNewer.IsChecked == true,
                 CopyPermissions = chkPermissions.IsChecked == true,
                 UseSourceSubfolder = chkUseSourceSubfolder.IsChecked == true,
+                FolderStructureOnly = chkFolderStructureOnly.IsChecked == true,
                 TestRun = chkTestRun.IsChecked == true,
 
                 Retries = ParseInt(txtRetries.Text, 1),

@@ -453,6 +453,11 @@
                                                   Checked="Options_Changed"
                                                   Unchecked="Options_Changed"/>
 
+                                        <CheckBox x:Name="chkFolderStructureOnly"
+                                                  Content="{Binding [FolderStructureOnly]}"
+                                                  Checked="FolderStructureOnly_Changed"
+                                                  Unchecked="FolderStructureOnly_Changed"/>
+
                                         <CheckBox x:Name="chkTestRun"
                                                   Content="{Binding [TestRun]}"
                                                   Checked="Options_Changed"
