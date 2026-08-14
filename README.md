@@ -11,7 +11,7 @@ Seals always look the same… and so do your backups. 🦭
 
 ## ✨ Two editions
 
-| Feature                              | Beginner (Classic) | Professional  |
+| Feature                              | Beginner | Professional  |
 | ------------------------------------ | :----------------: | :-------: |
 | Simple, clean GUI                    | ✅ | ✅ |
 | Checkboxes for common RoboCopy flags | ✅ | ✅ |
